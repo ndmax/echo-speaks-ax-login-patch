@@ -1,6 +1,6 @@
-# Echo Speaks: Amazon `/ax` login patch
+# Echo Speaks: Amazon `/ax` Login Patch
 
-Target: `tonesto7/echo-speaks-server`, bundled `libs/alexa-cookie/lib/proxy.js`.
+Target: `tonesto7/echo-speaks-server`, bundled `libs/alexa-cookie/lib/proxy.js` [[file link]](https://github.com/tonesto7/echo-speaks-server/blob/master/libs/alexa-cookie/lib/proxy.js).
 
 Background: Amazon's identifier-first sign-in now posts to root-relative URLs
 such as `/ax/claim`. Echo Speaks normally mounts its Amazon proxy at `/proxy`.
@@ -37,23 +37,24 @@ anchors don't occur exactly once. It creates `proxy.js.bak-YYYYMMDD-HHMMSS`
 and checks syntax using `node --check` when Node is available. It patches only
 `proxy.js`; no dependencies or credentials are required.
 
-## Docker / Unraid: persistent installation
+## Docker: persistent installation
 
 The upstream project's Dockerfile uses `/usr/src/app` as its work directory.
 Verify your own image and container name if they differ.
 
 ```sh
-# Replace echo-speaks with your actual container name.
+# Replace "echo-speaks" with your actual container name.
 docker exec echo-speaks sh -c 'test -f /usr/src/app/libs/alexa-cookie/lib/proxy.js'
 
-# Copy the original from the running container to a persistent Unraid folder.
-mkdir -p /mnt/user/appdata/echo-speaks-patch
+# Copy the original from the running container to a persistent folder.
+# Replace "/persistent/patch/folder with your preferred path.
+mkdir -p /persistent/patch/folder
 docker cp echo-speaks:/usr/src/app/libs/alexa-cookie/lib/proxy.js \
-  /mnt/user/appdata/echo-speaks-patch/proxy.js
+  /persistent/patch/folder/proxy.js
 
 # Run the patcher (put apply_es_ax_patch.py wherever convenient).
-python3 apply_es_ax_patch.py /mnt/user/appdata/echo-speaks-patch/proxy.js --dry-run
-python3 apply_es_ax_patch.py /mnt/user/appdata/echo-speaks-patch/proxy.js
+python3 apply_es_ax_patch.py /persistent/patch/folder/proxy.js --dry-run
+python3 apply_es_ax_patch.py /persistent/patch/folder/proxy.js
 ```
 
 Add this **file** bind mount to the existing Echo Speaks container definition,
@@ -61,7 +62,7 @@ Add this **file** bind mount to the existing Echo Speaks container definition,
 
 ```yaml
 volumes:
-  - /mnt/user/appdata/echo-speaks-patch/proxy.js:/usr/src/app/libs/alexa-cookie/lib/proxy.js:ro
+  - /persistent/patch/folder/proxy.js:/usr/src/app/libs/alexa-cookie/lib/proxy.js:ro
 ```
 
 Recreate the container to apply the new mount (for Docker Compose,
@@ -76,7 +77,7 @@ compatibility.
 Instead of adding a bind mount, copy the patched file into the container:
 
 ```sh
-docker cp /mnt/user/appdata/echo-speaks-patch/proxy.js \
+docker cp /persistent/patch/folder/proxy.js \
   echo-speaks:/usr/src/app/libs/alexa-cookie/lib/proxy.js
 docker restart echo-speaks
 ```
@@ -108,8 +109,8 @@ For a bind-mounted installation, restore the original backup to the mounted
 `proxy.js` file and restart the container:
 
 ```sh
-cp /mnt/user/appdata/echo-speaks-patch/proxy.js.bak-YYYYMMDD-HHMMSS \
-   /mnt/user/appdata/echo-speaks-patch/proxy.js
+cp /persistent/patch/folder/proxy.js.bak-YYYYMMDD-HHMMSS \
+   /persistent/patch/folder/proxy.js
 docker restart echo-speaks
 ```
 
